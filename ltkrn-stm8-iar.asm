@@ -9,7 +9,7 @@
   public krn_enter_thread
 
 krn_uthread_idle:
-  ;wfi
+  wfi
   jp krn_uthread_idle
 
 krn_enter_thread:
