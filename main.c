@@ -5,8 +5,8 @@
 #include "stm8s.h"
 #include "stm8s_tim4.h"
 
-#define OS_THREAD_STACK 80
-#define MAIN_THREAD_STACK 80
+#define OS_THREAD_STACK 0x30
+#define MAIN_THREAD_STACK 0x30
 
 #define main_thread_stack (void*)(KRN_STACKFRAME - 1 * MAIN_THREAD_STACK)
 #define btn_thread_stack  (void*)(KRN_STACKFRAME - 2 * MAIN_THREAD_STACK)
@@ -22,7 +22,7 @@ NEAR static uint8_t adc_data[560];
 static uint8_t flag_led;
 static uint8_t g_cnt;
 
-static void main_thread_func (void)
+static NO_REG_SAVE void main_thread_func (void)
 {
   uint32_t sleep_ticks;
   int j;
@@ -39,7 +39,7 @@ static void main_thread_func (void)
     }
 }
 
-static void btn_thread_func (void)
+static NO_REG_SAVE void btn_thread_func (void)
 {
   int btn, btn_old;
   int j;
@@ -61,7 +61,7 @@ static void btn_thread_func (void)
   }
 }
 
-static void io_thread_func (void)
+static NO_REG_SAVE void io_thread_func (void)
 {
   int i, j, k;
   while(1)
@@ -97,9 +97,9 @@ int main( void )
   uart_init(115200);
   krn_tmp_stack();
   krn_thread_init();
-  krn_thread_create(&thr_main, main_thread_func, (void*)1, 1, main_thread_stack, MAIN_THREAD_STACK);
-  krn_thread_create(&thr_btn, btn_thread_func, (void*)2, 6, btn_thread_stack, MAIN_THREAD_STACK);
-  krn_thread_create(&thr_io, io_thread_func, (void*)3, 1, io_thread_stack, MAIN_THREAD_STACK);
+  krn_thread_create(&thr_main, (void*)main_thread_func, (void*)1, 1, main_thread_stack, MAIN_THREAD_STACK);
+  krn_thread_create(&thr_btn, (void*)btn_thread_func, (void*)2, 6, btn_thread_stack, MAIN_THREAD_STACK);
+  krn_thread_create(&thr_io, (void*)io_thread_func, (void*)3, 1, io_thread_stack, MAIN_THREAD_STACK);
   krn_timer_init();
   krn_mutex_init(&mutex_printf);
   krn_run();

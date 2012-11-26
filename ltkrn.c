@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include "ltkrn.h"
 #include "stm8s_tim4.h"
 
@@ -80,7 +79,7 @@ static NO_REG_SAVE void krn_thread_shell (void)
     }
 }
 
-inline void krn_thread_create(krn_thread *thr, void (*func)(void), void* param, uint8_t tslice, void *stack, uint8_t stack_size)
+inline void krn_thread_create(krn_thread *thr, void *func, void* param, uint8_t tslice, void *stack, uint8_t stack_size)
 {
   krn_thread_insert(thr, krn_thread_first);
   thr->func = func;
@@ -208,7 +207,7 @@ void krn_timer_init()
 
 void krn_run()
 {
-  krn_thread_create(&thr_uthread_idle, krn_uthread_idle, (void*)0, 1, (void*)KRN_STACKFRAME, KRN_STACK_IDLE);
+  krn_thread_create(&thr_uthread_idle, (void*)krn_uthread_idle, (void*)0, 1, (void*)KRN_STACKFRAME, KRN_STACK_IDLE);
   thr_uthread_idle.flags |= KRN_THR_IDLE;
   krn_thread_current = krn_thread_first;
   krn_context_load(krn_thread_first);

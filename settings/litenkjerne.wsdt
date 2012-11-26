@@ -2,47 +2,42 @@
 
 <Workspace>
   <ConfigDictionary>
-    <CurrentConfigs>
-      <Project>litenkjerne/Release</Project>
-    </CurrentConfigs>
-  </ConfigDictionary>
+    
+  <CurrentConfigs><Project>litenkjerne/Debug</Project></CurrentConfigs></ConfigDictionary>
   <Desktop>
     <Static>
       <Workspace>
         <ColumnWidths>
-          <Column0>212</Column0>
-          <Column1>27</Column1>
-          <Column2>27</Column2>
-          <Column3>27</Column3>
-        </ColumnWidths>
+          
+          
+          
+          
+        <Column0>270</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
       </Workspace>
       <Build>
-        <ColumnWidth0>20</ColumnWidth0>
-        <ColumnWidth1>1156</ColumnWidth1>
-        <ColumnWidth2>308</ColumnWidth2>
-        <ColumnWidth3>77</ColumnWidth3>
-      </Build>
+        
+        
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1156</ColumnWidth1><ColumnWidth2>308</ColumnWidth2><ColumnWidth3>77</ColumnWidth3></Build>
       <TerminalIO/>
     </Static>
     <Windows>
-      <Wnd2>
+      
+      
+    <Wnd0>
         <Tabs>
           <Tab>
             <Identity>TabID-7992-15065</Identity>
             <TabName>Workspace</TabName>
             <Factory>Workspace</Factory>
             <Session>
-              <NodeDict>
-                <ExpandedNode>litenkjerne</ExpandedNode>
-                <ExpandedNode>litenkjerne/STM8S_StdPeriph_Driver</ExpandedNode>
-                <ExpandedNode>litenkjerne/STM8S_StdPeriph_Driver/src</ExpandedNode>
-              </NodeDict>
-            </Session>
+              
+            <NodeDict><ExpandedNode>litenkjerne</ExpandedNode><ExpandedNode>litenkjerne/STM8S_StdPeriph_Driver</ExpandedNode><ExpandedNode>litenkjerne/STM8S_StdPeriph_Driver/src</ExpandedNode></NodeDict></Session>
           </Tab>
         </Tabs>
-        <SelectedTab>0</SelectedTab>
-      </Wnd2>
-      <Wnd3>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1>
         <Tabs>
           <Tab>
             <Identity>TabID-14454-16172</Identity>
@@ -51,128 +46,21 @@
             <Session/>
           </Tab>
         </Tabs>
-        <SelectedTab>0</SelectedTab>
-      </Wnd3>
-    </Windows>
+        
+      <SelectedTab>0</SelectedTab></Wnd1></Windows>
     <Editor>
-      <Pane>
-        <Tab>
-          <Factory>TextEditor</Factory>
-          <Filename>$WS_DIR$\main.c</Filename>
-          <XPos>0</XPos>
-          <YPos>74</YPos>
-          <SelStart>2026</SelStart>
-          <SelEnd>2026</SelEnd>
-        </Tab>
-        <ActiveTab>0</ActiveTab>
-        <Tab>
-          <Factory>TextEditor</Factory>
-          <Filename>$WS_DIR$\uart.h</Filename>
-          <XPos>0</XPos>
-          <YPos>0</YPos>
-          <SelStart>33</SelStart>
-          <SelEnd>33</SelEnd>
-        </Tab>
-        <Tab>
-          <Factory>TextEditor</Factory>
-          <Filename>$WS_DIR$\ltkrn.h</Filename>
-          <XPos>0</XPos>
-          <YPos>0</YPos>
-          <SelStart>40</SelStart>
-          <SelEnd>40</SelEnd>
-        </Tab>
-        <Tab>
-          <Factory>TextEditor</Factory>
-          <Filename>$WS_DIR$\ltkrn.c</Filename>
-          <XPos>0</XPos>
-          <YPos>0</YPos>
-          <SelStart>7526</SelStart>
-          <SelEnd>7526</SelEnd>
-        </Tab>
-        <Tab>
-          <Factory>TextEditor</Factory>
-          <Filename>$WS_DIR$\uart.c</Filename>
-          <XPos>0</XPos>
-          <YPos>0</YPos>
-          <SelStart>130</SelStart>
-          <SelEnd>130</SelEnd>
-        </Tab>
-      </Pane>
-      <ActivePane>0</ActivePane>
-      <Sizes>
-        <Pane>
-          <X>1000000</X>
-          <Y>1000000</Y>
-        </Pane>
-      </Sizes>
-      <SplitMode>1</SplitMode>
-    </Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\main.c</Filename><XPos>0</XPos><YPos>2</YPos><SelStart>159</SelStart><SelEnd>159</SelEnd></Tab><ActiveTab>0</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\uart.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>33</SelStart><SelEnd>33</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\ltkrn.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>114</SelStart><SelEnd>114</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\ltkrn.c</Filename><XPos>0</XPos><YPos>47</YPos><SelStart>1522</SelStart><SelEnd>1522</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\uart.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>130</SelStart><SelEnd>130</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\ltkrn-stm8-iar.asm</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>266</SelStart><SelEnd>266</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\STM8S_StdPeriph_Driver\src\stm8s_gpio.c</Filename><XPos>0</XPos><YPos>153</YPos><SelStart>6361</SelStart><SelEnd>6361</SelEnd></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
     <Positions>
-      <Top>
-        <Row0>
-          <Sizes>
-            <Toolbar-012aabe0>
-              <key>iaridepm.enu1</key>
-            </Toolbar-012aabe0>
-          </Sizes>
-        </Row0>
-        <Row1>
-          <Sizes/>
-        </Row1>
-      </Top>
-      <Left>
-        <Row0>
-          <Sizes>
-            <Wnd2>
-              <Rect>
-                <Top>-2</Top>
-                <Left>-2</Left>
-                <Bottom>776</Bottom>
-                <Right>286</Right>
-                <x>-2</x>
-                <y>-2</y>
-                <xscreen>200</xscreen>
-                <yscreen>200</yscreen>
-                <sizeHorzCX>125000</sizeHorzCX>
-                <sizeHorzCY>196464</sizeHorzCY>
-                <sizeVertCX>180000</sizeVertCX>
-                <sizeVertCY>764244</sizeVertCY>
-              </Rect>
-            </Wnd2>
-          </Sizes>
-        </Row0>
-      </Left>
-      <Right>
-        <Row0>
-          <Sizes/>
-        </Row0>
-      </Right>
-      <Bottom>
-        <Row0>
-          <Sizes>
-            <Wnd3>
-              <Rect>
-                <Top>-2</Top>
-                <Left>-2</Left>
-                <Bottom>198</Bottom>
-                <Right>1602</Right>
-                <x>-2</x>
-                <y>-2</y>
-                <xscreen>1604</xscreen>
-                <yscreen>200</yscreen>
-                <sizeHorzCX>1002500</sizeHorzCX>
-                <sizeHorzCY>196464</sizeHorzCY>
-                <sizeVertCX>125000</sizeVertCX>
-                <sizeVertCY>196464</sizeVertCY>
-              </Rect>
-            </Wnd3>
-          </Sizes>
-        </Row0>
-      </Bottom>
-      <Float>
-        <Sizes/>
-      </Float>
-    </Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-012aaaa0><key>iaridepm.enu1</key></Toolbar-012aaaa0></Sizes></Row0><Row1><Sizes/></Row1><Row2><Sizes><Toolbar-0bb6f6f8><key>debuggergui.enu1</key></Toolbar-0bb6f6f8></Sizes></Row2></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>797</Bottom><Right>344</Right><x>-2</x><y>-2</y><xscreen>240</xscreen><yscreen>205</yscreen><sizeHorzCX>125000</sizeHorzCX><sizeHorzCY>196360</sizeHorzCY><sizeVertCX>180208</sizeVertCX><sizeVertCY>765326</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>203</Bottom><Right>1922</Right><x>-2</x><y>-2</y><xscreen>1924</xscreen><yscreen>205</yscreen><sizeHorzCX>1002083</sizeHorzCX><sizeHorzCY>196360</sizeHorzCY><sizeVertCX>125000</sizeVertCX><sizeVertCY>196360</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
   </Desktop>
 </Workspace>
 

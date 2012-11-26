@@ -4,7 +4,7 @@
 #include "stm8s.h"
 
 #define KRN_RAMTOP  0x400
-#define KRN_STACK_IDLE  0x40
+#define KRN_STACK_IDLE  0x30
 #define KRN_STACKFRAME  (KRN_RAMTOP - KRN_STACK_IDLE)
 
 #define KRN_FREQ  100
@@ -35,7 +35,7 @@ typedef struct _krn_thread
 	uint8_t tslice_c;
 	int16_t timer;
 	uint8_t flags;
-	void (*func)(void);
+	void *func;
 	void* param;
 }
 krn_thread;
@@ -51,12 +51,12 @@ extern inline void krn_thread_init();
 extern inline void krn_thread_insert(krn_thread *thr, krn_thread *after);
 extern inline void krn_thread_del(krn_thread *thr);
 extern inline void krn_thread_move(krn_thread *thr, krn_thread *after);
-extern inline void krn_thread_create(krn_thread *thr, void (*func)(void), void* param, uint8_t tslice, void *stack, uint8_t stack_size);
+extern inline void krn_thread_create(krn_thread *thr, void *func, void* param, uint8_t tslice, void *stack, uint8_t stack_size);
 extern inline uint8_t krn_dispatch_h();
 extern void krn_context_switch(krn_thread  *from, krn_thread *to);
 extern void krn_context_load(krn_thread *load);
 extern void krn_uthread_idle(void);
-extern void krn_enter_thread(void (*func)(void));
+extern void krn_enter_thread(void *func);
 extern inline void krn_dispatch();
 extern void krn_timer_init();
 extern void krn_run();
@@ -76,7 +76,7 @@ extern void krn_mutex_unlock(krn_mutex *mutex);
 #define NO_REG_SAVE
 #endif
 
-#define krn_tmp_stack()      asm ("ldw x, #0x2FF\nldw SP, x\n")
+#define krn_tmp_stack()      asm ("ldw x, #0x2ff\nldw SP, x\n")
 
 /* Critical region protection */
 /* COSMIC: Use inline assembler */
