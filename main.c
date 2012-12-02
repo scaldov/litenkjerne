@@ -12,6 +12,38 @@
 #define btn_thread_stack  (void*)(KRN_STACKFRAME - 2 * MAIN_THREAD_STACK)
 #define io_thread_stack   (void*)(KRN_STACKFRAME - 3 * MAIN_THREAD_STACK)
 
+////
+#define HD44780_RS    0x02
+#define HD44780_E     0x08
+#define HD44780_RW    0x04
+#define HD44780_DATA  0xF0
+#define HD44780_SH    4
+#define HD44780_PORT  GPIOC
+
+void hd44780_cmd(uint8_t cmd)
+{
+  uint8_t p = (uint8_t)HD44780_PORT->ODR & ~(HD44780_DATA | HD44780_RS | HD44780_E | HD44780_RW);
+  uint8_t t = p | HD44780_E | ( ( (cmd & 0xF0) >> 4) << HD44780_SH);
+  HD44780_PORT->ODR = t;
+  HD44780_PORT->ODR = t & ~HD44780_E;
+  t = p | HD44780_E | ( (cmd & 0x0F) << HD44780_SH);
+  HD44780_PORT->ODR = t;
+  HD44780_PORT->ODR = t & ~HD44780_E;
+}
+
+void hd44780_out(uint8_t data)
+{
+  uint8_t p = (uint8_t)HD44780_PORT->ODR & ~(HD44780_DATA | HD44780_RS | HD44780_E | HD44780_RW);
+  p |= HD44780_RS;
+  uint8_t t = p | HD44780_E | ( ( (data & 0xF0) >> 4) << HD44780_SH);
+  HD44780_PORT->ODR = t;
+  HD44780_PORT->ODR = t & ~HD44780_E;
+  t = p | HD44780_E | ( (data & 0x0F) << HD44780_SH);
+  HD44780_PORT->ODR = t;
+  HD44780_PORT->ODR = t & ~HD44780_E;
+}
+////
+
 krn_mutex mutex_printf;
 extern char uart_putchar (char c);
 
@@ -64,6 +96,26 @@ static NO_REG_SAVE void btn_thread_func (void)
 static NO_REG_SAVE void io_thread_func (void)
 {
   int i, j, k;
+  //
+  hd44780_cmd(0x2c);
+  krn_sleep(1);
+  hd44780_cmd(0x0c);
+  krn_sleep(1);
+  hd44780_cmd(0x01);
+  krn_sleep(1);
+  hd44780_out('S');
+  krn_sleep(1);
+  hd44780_out('c');
+  krn_sleep(1);
+  hd44780_out('y');
+  krn_sleep(1);
+  hd44780_out('l');
+  krn_sleep(1);
+  hd44780_out('d');
+  krn_sleep(1);
+  hd44780_out('.');
+  krn_sleep(1);
+  //
   while(1)
   {
     adc_data[i] = i&0xFF;
@@ -93,6 +145,7 @@ int main( void )
   GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_IN_PU_NO_IT);
   GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_IN_PU_NO_IT);
   GPIO_Init(GPIOA, GPIO_PIN_3, GPIO_MODE_OUT_PP_HIGH_FAST);
+  GPIO_Init(GPIOC, GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_5 | GPIO_PIN_4 | GPIO_PIN_3 | GPIO_PIN_2 | GPIO_PIN_1, GPIO_MODE_OUT_PP_HIGH_FAST);
   GPIO_WriteHigh(GPIOA, GPIO_PIN_3);
   uart_init(115200);
   krn_tmp_stack();
