@@ -49,7 +49,8 @@ extern char uart_putchar (char c);
 
 static krn_thread thr_main, thr_btn, thr_io;
 
-NEAR static uint8_t adc_data[560];
+NEAR static uint8_t adc_data[540];
+NEAR static uint8_t g_str[20];
 
 static uint8_t flag_led;
 static uint8_t g_cnt;
@@ -97,7 +98,8 @@ static NO_REG_SAVE void io_thread_func (void)
 {
   int i, j, k;
   //
-  hd44780_cmd(0x2c);
+  krn_sleep(KRN_FREQ/2);
+  hd44780_cmd(0x28);
   krn_sleep(1);
   hd44780_cmd(0x0c);
   krn_sleep(1);
@@ -125,6 +127,13 @@ static NO_REG_SAVE void io_thread_func (void)
     k = GPIO_ReadInputPin(GPIOB, GPIO_PIN_0) ? 1 : 0;
     printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
     krn_mutex_unlock(&mutex_printf);
+    sprintf(g_str, "%d", krn_timer_cnt / KRN_FREQ);
+    k = strlen(g_str);
+    for(j = 0; j < k; j++)
+    {
+        hd44780_out(g_str[j]);
+        krn_sleep(1);
+    }
     krn_sleep(KRN_FREQ/10);
   }
 }
@@ -137,8 +146,8 @@ int main( void )
   flag_led = 0;
   CLK_DeInit();
   CLK_HSICmd(ENABLE);
-  CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV1);  //8-8 still normal
-  CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV1);
+  CLK_SYSCLKConfig(CLK_PRESCALER_HSIDIV2);  //8-8 still normal
+  CLK_SYSCLKConfig(CLK_PRESCALER_CPUDIV2);
   GPIO_DeInit(GPIOD);
   GPIO_Init(GPIOD, GPIO_PIN_0, GPIO_MODE_OUT_PP_HIGH_FAST);
   GPIO_Init(GPIOB, GPIO_PIN_7, GPIO_MODE_IN_PU_NO_IT);
