@@ -106,7 +106,8 @@ void ad8950_freqs(uint32_t freq)
   d = (freq ) & 0xFF;
   for(i = 0; i < 8; i++)
   {
-    AD9850_DATA->ODR = ((d>>1) & 1) ? 0xC0 : 0;
+    AD9850_DATA->ODR = (d & 1) ? 0xC0 : 0;
+    d = (d >> 1);
     AD9850_SYNC->ODR = p | AD9850_WCLK;
     asm("nop\n");
     AD9850_SYNC->ODR = p;
@@ -115,7 +116,8 @@ void ad8950_freqs(uint32_t freq)
   d = (freq >> 8) & 0xFF;
   for(i = 0; i < 8; i++)
   {
-    AD9850_DATA->ODR = ((d>>1) & 1) ? 0xC0 : 0;
+    AD9850_DATA->ODR = (d & 1) ? 0xC0 : 0;
+    d = (d >> 1);
     AD9850_SYNC->ODR = p | AD9850_WCLK;
     asm("nop\n");
     AD9850_SYNC->ODR = p;
@@ -124,7 +126,8 @@ void ad8950_freqs(uint32_t freq)
   d = (freq >> 16) & 0xFF;
   for(i = 0; i < 8; i++)
   {
-    AD9850_DATA->ODR = ((d>>1) & 1) ? 0xC0 : 0;
+    AD9850_DATA->ODR = (d & 1) ? 0xC0 : 0;
+    d = (d >> 1);
     AD9850_SYNC->ODR = p | AD9850_WCLK;
     asm("nop\n");
     AD9850_SYNC->ODR = p;
@@ -133,7 +136,8 @@ void ad8950_freqs(uint32_t freq)
   d = (freq >> 24) & 0xFF;
   for(i = 0; i < 8; i++)
   {
-    AD9850_DATA->ODR = ((d>>1) & 1) ? 0xC0 : 0;
+    AD9850_DATA->ODR = (d & 1) ? 0xC0 : 0;
+    d = (d >> 1);
     AD9850_SYNC->ODR = p | AD9850_WCLK;
     asm("nop\n");
     AD9850_SYNC->ODR = p;
@@ -142,7 +146,8 @@ void ad8950_freqs(uint32_t freq)
   d = 0;
   for(i = 0; i < 8; i++)
   {
-    AD9850_DATA->ODR = ((d>>1) & 1) ? 0xC0 : 0;
+    AD9850_DATA->ODR = (d & 1) ? 0xC0 : 0;
+    d = (d >> 1);
     AD9850_SYNC->ODR = p | AD9850_WCLK;
     asm("nop\n");
     AD9850_SYNC->ODR = p;
