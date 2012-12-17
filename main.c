@@ -23,11 +23,16 @@
 #define AD9850_PART
 #define AD9850_DATA  GPIOB
 #define AD9850_LDATA  GPIOB
-#define AD9850_HDATA  GPIOB
-#define AD9850_LBITS 5
-#define AD9850_HBITS 3
-#define AD9850_LSHIFT 2
-#define AD9850_HSHIFT 2
+#define AD9850_HDATA  GPIOC
+#define AD9850_SYNC  GPIOC
+#define AD9850_WCLK  (1<<2)
+#define AD9850_FQUP  (1<<3)
+#define AD9850_RST   (1<<1)
+#define AD9850_LBITS 4
+#define AD9850_HBITS 4
+#define AD9850_LSHIFT 0
+#define AD9850_HSHIFT 4
+#define AD9850_SDATA (1<<6)
 #define AD9850_LMASK (((2 << AD9850_LBITS) - 1) << AD9850_LSHIFT)
 #define AD9850_HMASK (((2 << AD9850_HBITS) - 1) << AD9850_HSHIFT)
 #ifdef AD9850_PART
@@ -35,11 +40,6 @@
 #else
 AD9850_WRITE(d) AD9850_DATA->ODR=d
 #endif
-#define AD9850_SYNC  GPIOC
-#define AD9850_SDATA 0x40
-#define AD9850_WCLK  0x80
-#define AD9850_FQUP  0x40
-#define AD9850_RST   0x20
 
 #include "stm8s_i2c.h"
 #include "stm8s_tim1.h"
@@ -59,13 +59,13 @@ void ad8950_init()
   //AD9850_SYNC->DDR = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
   //AD9850_SYNC->CR1 = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
   //AD9850_SYNC->CR2 = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
+  GPIO_Init(AD9850_SYNC, AD9850_WCLK | AD9850_FQUP | AD9850_RST, GPIO_MODE_OUT_PP_HIGH_FAST);
 #ifdef AD9850_PART
   GPIO_Init(AD9850_LDATA, AD9850_LMASK, GPIO_MODE_OUT_PP_HIGH_FAST);
   GPIO_Init(AD9850_HDATA, AD9850_HMASK, GPIO_MODE_OUT_PP_HIGH_FAST);
 #else
   GPIO_Init(AD9850_DATA, 0xFF, GPIO_MODE_OUT_PP_HIGH_FAST);
 #endif
-  GPIO_Init(AD9850_SYNC, AD9850_WCLK | AD9850_FQUP | AD9850_RST, GPIO_MODE_OUT_PP_HIGH_FAST);
   p = (uint8_t)AD9850_SYNC->ODR & ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(0);
   AD9850_DATA->ODR = 0;
@@ -93,31 +93,44 @@ void ad8950_freq(uint32_t freq)
   CRITICAL_START();
   ll = freq & 0xFF;
   lh = (freq >> 8) & 0xFF;
-  lh = (freq >> 16) & 0xFF;
-  lh = freq >> 24;
+  hl = (freq >> 16) & 0xFF;
+  hh = freq >> 24;
   //*
-  p = (uint8_t)AD9850_SYNC->ODR & ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(0);
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(hh);
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(hl);
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(lh);
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   AD9850_WRITE(ll);
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
-  AD9850_SYNC->ODR = p | AD9850_FQUP;
-  AD9850_SYNC->ODR = p;
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
+  AD9850_SYNC->ODR |= AD9850_FQUP;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
   //*/
   CRITICAL_END();
 }
+
+void ad8950_phase(uint8_t phase)
+{
+  uint8_t p;
+  CRITICAL_STORE;
+  CRITICAL_START();
+  AD9850_WRITE(phase & 0xF8);
+  AD9850_SYNC->ODR |= AD9850_WCLK;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
+  AD9850_SYNC->ODR |= AD9850_FQUP;
+  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
+  CRITICAL_END();
+}
+
 
 void ad8950_freqs(uint32_t freq)
 {
@@ -185,20 +198,6 @@ void ad8950_freqs(uint32_t freq)
   CRITICAL_END();
 }
 
-
-void ad8950_phase(uint8_t phase)
-{
-  uint8_t p;
-  CRITICAL_STORE;
-  CRITICAL_START();
-  p = (uint8_t)AD9850_SYNC->ODR & ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_DATA->ODR = phase & 0xF8;
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  AD9850_SYNC->ODR = p;
-  AD9850_SYNC->ODR = p | AD9850_FQUP;
-  AD9850_SYNC->ODR = p;
-  CRITICAL_END();
-}
 
 void hd44780_cmd(uint8_t cmd)
 {
@@ -301,9 +300,9 @@ static NO_REG_SAVE void io_thread_func (void)
   */
   ad8950_init();
   //ad8950_freq(463856468); //13.5MHz
-  //ad8950_freqs(927712936); //27MHz
-  //8950_freqs(1030792151); //30MHz
-  ad8950_freq(463856468); //250Hz
+  //ad8950_freq(927712936); //27MHz
+  //ad8950_freq(1030792151); //30MHz
+  ad8950_freq(8589935); //250KHz
   while(1)
   {
     //adc_data[i] = i&0xFF;
@@ -314,14 +313,14 @@ static NO_REG_SAVE void io_thread_func (void)
     //printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
     //krn_mutex_unlock(&mutex_printf);
     //sprintf(g_str, "%d", krn_timer_cnt / KRN_FREQ);
-    k = strlen(g_str);
+    //k = strlen(g_str);
     for(j = 0; j < k; j++)
     {
         //hd44780_out(g_str[j]);
         //krn_sleep(1);
     }
-    krn_sleep(KRN_FREQ/10);
-    ad8950_freq(463856468); //250Hz
+    //krn_sleep(KRN_FREQ/100);
+    ad8950_phase(f & 0xFF);
     f+=100000;
   }
 }
