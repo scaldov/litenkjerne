@@ -1,9 +1,10 @@
 #include <stdio.h>
 
-#include "ltkrn.h"
-#include "uart.h"
 #include "stm8s.h"
 #include "stm8s_tim4.h"
+#include "ltkrn.h"
+#include "ad8950.h"
+#include "uart.h"
 
 #define OS_THREAD_STACK 0x30
 #define MAIN_THREAD_STACK 0x30
@@ -20,184 +21,9 @@
 #define HD44780_SH    4
 #define HD44780_PORT  GPIOC
 
-#define AD9850_PART
-#define AD9850_DATA  GPIOB
-#define AD9850_LDATA  GPIOB
-#define AD9850_HDATA  GPIOC
-#define AD9850_SYNC  GPIOC
-#define AD9850_WCLK  (1<<2)
-#define AD9850_FQUP  (1<<3)
-#define AD9850_RST   (1<<1)
-#define AD9850_LBITS 4
-#define AD9850_HBITS 4
-#define AD9850_LSHIFT 0
-#define AD9850_HSHIFT 4
-#define AD9850_SDATA (1<<6)
-#define AD9850_LMASK (((2 << AD9850_LBITS) - 1) << AD9850_LSHIFT)
-#define AD9850_HMASK (((2 << AD9850_HBITS) - 1) << AD9850_HSHIFT)
-#ifdef AD9850_PART
-#define AD9850_WRITE(d) AD9850_LDATA->ODR=(AD9850_LDATA->ODR&~AD9850_LMASK)|(((d)<<AD9850_LSHIFT)&AD9850_LMASK);AD9850_HDATA->ODR=((AD9850_HDATA->ODR&~AD9850_HMASK))|((((d)>>AD9850_LBITS)<<AD9850_HSHIFT)&AD9850_HMASK)
-#else
-AD9850_WRITE(d) AD9850_DATA->ODR=d
-#endif
-
 #include "stm8s_i2c.h"
 #include "stm8s_tim1.h"
 #include "stm8s_spi.h"
-
-void ad8950_init()
-{
-  uint8_t p;
-  CRITICAL_STORE;
-  CRITICAL_START();
-  I2C_DeInit();
-  TIM1_DeInit();
-  SPI_DeInit();
-  //AD9850_DATA->DDR = 0xFF;
-  //AD9850_DATA->CR1 = 0xFF;
-  //AD9850_DATA->CR2 = 0x0;
-  //AD9850_SYNC->DDR = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
-  //AD9850_SYNC->CR1 = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
-  //AD9850_SYNC->CR2 = AD9850_WCLK | AD9850_FQUP | AD9850_RST;
-  GPIO_Init(AD9850_SYNC, AD9850_WCLK | AD9850_FQUP | AD9850_RST, GPIO_MODE_OUT_PP_HIGH_FAST);
-#ifdef AD9850_PART
-  GPIO_Init(AD9850_LDATA, AD9850_LMASK, GPIO_MODE_OUT_PP_HIGH_FAST);
-  GPIO_Init(AD9850_HDATA, AD9850_HMASK, GPIO_MODE_OUT_PP_HIGH_FAST);
-#else
-  GPIO_Init(AD9850_DATA, 0xFF, GPIO_MODE_OUT_PP_HIGH_FAST);
-#endif
-  p = (uint8_t)AD9850_SYNC->ODR & ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(0);
-  AD9850_DATA->ODR = 0;
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p | AD9850_RST;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p | AD9850_WCLK;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p | AD9850_FQUP;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  CRITICAL_END();
-}
-
-void ad8950_freq(uint32_t freq)
-{
-  uint8_t p, ll, lh, hl ,hh;
-  CRITICAL_STORE;
-  CRITICAL_START();
-  ll = freq & 0xFF;
-  lh = (freq >> 8) & 0xFF;
-  hl = (freq >> 16) & 0xFF;
-  hh = freq >> 24;
-  //*
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(0);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(hh);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(hl);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(lh);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_WRITE(ll);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_SYNC->ODR |= AD9850_FQUP;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  //*/
-  CRITICAL_END();
-}
-
-void ad8950_phase(uint8_t phase)
-{
-  uint8_t p;
-  CRITICAL_STORE;
-  CRITICAL_START();
-  AD9850_WRITE(phase & 0xF8);
-  AD9850_SYNC->ODR |= AD9850_WCLK;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_SYNC->ODR |= AD9850_FQUP;
-  AD9850_SYNC->ODR &= ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  CRITICAL_END();
-}
-
-
-void ad8950_freqs(uint32_t freq)
-{
-  uint8_t p;
-  uint8_t i, d;
-  CRITICAL_STORE;
-  CRITICAL_START();
-  p = (uint8_t)AD9850_SYNC->ODR & ~(AD9850_FQUP | AD9850_WCLK | AD9850_RST);
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  d = (freq ) & 0xFF;
-  for(i = 0; i < 8; i++)
-  {
-    AD9850_DATA->ODR = (d & 1) ? AD9850_SDATA : 0;
-    d = (d >> 1);
-    AD9850_SYNC->ODR = p | AD9850_WCLK;
-    asm("nop\n");
-    AD9850_SYNC->ODR = p;
-    asm("nop\n");
-  }
-  d = (freq >> 8) & 0xFF;
-  for(i = 0; i < 8; i++)
-  {
-    AD9850_DATA->ODR = (d & 1) ? AD9850_SDATA : 0;
-    d = (d >> 1);
-    AD9850_SYNC->ODR = p | AD9850_WCLK;
-    asm("nop\n");
-    AD9850_SYNC->ODR = p;
-    asm("nop\n");
-  }
-  d = (freq >> 16) & 0xFF;
-  for(i = 0; i < 8; i++)
-  {
-    AD9850_DATA->ODR = (d & 1) ? AD9850_SDATA : 0;
-    d = (d >> 1);
-    AD9850_SYNC->ODR = p | AD9850_WCLK;
-    asm("nop\n");
-    AD9850_SYNC->ODR = p;
-    asm("nop\n");
-  }
-  d = (freq >> 24) & 0xFF;
-  for(i = 0; i < 8; i++)
-  {
-    AD9850_DATA->ODR = (d & 1) ? AD9850_SDATA : 0;
-    d = (d >> 1);
-    AD9850_SYNC->ODR = p | AD9850_WCLK;
-    asm("nop\n");
-    AD9850_SYNC->ODR = p;
-    asm("nop\n");
-  }
-  d = 0;
-  for(i = 0; i < 8; i++)
-  {
-    AD9850_DATA->ODR = (d & 1) ? AD9850_SDATA : 0;
-    d = (d >> 1);
-    AD9850_SYNC->ODR = p | AD9850_WCLK;
-    asm("nop\n");
-    AD9850_SYNC->ODR = p;
-    asm("nop\n");
-  }
-  AD9850_SYNC->ODR = p | AD9850_FQUP;
-  asm("nop\n");
-  AD9850_SYNC->ODR = p;
-  asm("nop\n");
-  CRITICAL_END();
-}
-
 
 void hd44780_cmd(uint8_t cmd)
 {
@@ -307,11 +133,11 @@ static NO_REG_SAVE void io_thread_func (void)
   {
     //adc_data[i] = i&0xFF;
     i = (i+1) & 0xFF;
-    //krn_mutex_lock(&mutex_printf);
+    krn_mutex_lock(&mutex_printf);
     //j = GPIO_ReadInputPin(GPIOB, GPIO_PIN_1) ? 1 : 0;
     //k = GPIO_ReadInputPin(GPIOB, GPIO_PIN_0) ? 1 : 0;
-    //printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
-    //krn_mutex_unlock(&mutex_printf);
+    printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
+    krn_mutex_unlock(&mutex_printf);
     //sprintf(g_str, "%d", krn_timer_cnt / KRN_FREQ);
     //k = strlen(g_str);
     for(j = 0; j < k; j++)
