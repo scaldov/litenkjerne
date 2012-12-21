@@ -55,7 +55,7 @@ extern char uart_putchar (char c);
 static krn_thread thr_main, thr_btn, thr_io;
 
 NEAR static uint8_t adc_data[540];
-NEAR static uint8_t g_str[20];
+NEAR static char g_str[20];
 
 static uint8_t flag_led;
 static uint8_t g_cnt;
@@ -99,6 +99,47 @@ static NO_REG_SAVE void btn_thread_func (void)
   }
 }
 
+int8_t kout_u8h(char *s, uint8_t x)
+{
+  uint8_t t;
+  t = x >> 4;
+  t += 6;
+  t += (t & 0x10) ? 0x31 : 0x2A;
+  *(s++) = t;
+  t = x & 0xF;
+  t += 6;
+  t += (t & 0x10) ? 0x31 : 0x2A;
+  *(s++) = t;
+  return 2;
+}
+
+int8_t kout_u16h(char *s, uint16_t x)
+{
+  kout_u8h(s, x >> 8);
+  s += 2;
+  kout_u8h(s, x & 0xFF);
+  return 4;
+}
+
+int8_t kout_u32h(char *s, uint32_t x)
+{
+  kout_u8h(s, x >> 24);
+  s += 2;
+  kout_u8h(s, (x >> 16) & 0xFF);
+  s += 2;
+  kout_u8h(s, (x >> 8) & 0xFF);
+  s += 2;
+  kout_u8h(s, x & 0xFF);
+  return 8;
+}
+
+void kout_uart(char *s)
+{
+  krn_mutex_lock(&mutex_printf);
+  while (*s) uart_putchar(*(s++));
+  krn_mutex_unlock(&mutex_printf);
+}
+
 static NO_REG_SAVE void io_thread_func (void)
 {
   int i, j, k;
@@ -133,19 +174,15 @@ static NO_REG_SAVE void io_thread_func (void)
   {
     //adc_data[i] = i&0xFF;
     i = (i+1) & 0xFF;
-    krn_mutex_lock(&mutex_printf);
+    //krn_mutex_lock(&mutex_printf);
     //j = GPIO_ReadInputPin(GPIOB, GPIO_PIN_1) ? 1 : 0;
     //k = GPIO_ReadInputPin(GPIOB, GPIO_PIN_0) ? 1 : 0;
-    printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
-    krn_mutex_unlock(&mutex_printf);
-    //sprintf(g_str, "%d", krn_timer_cnt / KRN_FREQ);
-    //k = strlen(g_str);
-    for(j = 0; j < k; j++)
-    {
-        //hd44780_out(g_str[j]);
-        //krn_sleep(1);
-    }
-    //krn_sleep(KRN_FREQ/100);
+    //printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
+    //krn_mutex_unlock(&mutex_printf);
+    kout_u32h(g_str, f);
+    kout_uart("f=");
+    kout_uart(g_str);
+    kout_uart("\n");
     ad8950_phase(f & 0xFF);
     f+=100000;
   }
