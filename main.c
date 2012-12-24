@@ -110,6 +110,7 @@ int8_t kout_u8h(char *s, uint8_t x)
   t += 6;
   t += (t & 0x10) ? 0x31 : 0x2A;
   *(s++) = t;
+  *(s++) = 0;
   return 2;
 }
 
@@ -131,6 +132,48 @@ int8_t kout_u32h(char *s, uint32_t x)
   s += 2;
   kout_u8h(s, x & 0xFF);
   return 8;
+}
+
+typedef struct
+{
+  uint32_t quot;
+  uint8_t rem;
+} ltkrn_divmodu10struc;
+
+
+inline static ltkrn_divmodu10struc divmodu10(uint32_t n)
+{
+  uint32_t qq;
+  ltkrn_divmodu10struc r;
+  r.quot = n >> 1;
+  r.quot += r.quot >> 1;
+  r.quot += r.quot >> 4;
+  r.quot += r.quot >> 8;
+  r.quot += r.quot >> 16;
+  qq = r.quot;
+  r.quot >>= 3;
+  r.rem = (uint8_t)(n - ((r.quot << 1) + (qq & ~7ul)));
+  if(r.rem > 9)
+    {
+        r.rem -= 10;
+        r.quot++;
+    }
+  return r;
+}
+
+char * utoa_builtin_div(uint32_t value, char *buffer)
+{
+  ltkrn_divmodu10struc r;
+  buffer += 11; 
+  *--buffer = 0;
+  do
+  {
+     r = divmodu10(value);
+      *--buffer = r.rem + 0x30;
+      value = r.quot;
+   }
+   while (value != 0);
+   return buffer;
 }
 
 void kout_uart(char *s)
@@ -179,10 +222,14 @@ static NO_REG_SAVE void io_thread_func (void)
     //k = GPIO_ReadInputPin(GPIOB, GPIO_PIN_0) ? 1 : 0;
     //printf("%d\t%d\tsec=%d\tT=%d\tP=%d\n", i, g_cnt, krn_timer_cnt / KRN_FREQ, j, k);
     //krn_mutex_unlock(&mutex_printf);
+    //*
     kout_u32h(g_str, f);
     kout_uart("f=");
     kout_uart(g_str);
+    kout_uart(" sec=");
+    kout_uart(utoa_builtin_div(krn_timer_cnt / KRN_FREQ, g_str + 12));
     kout_uart("\n");
+    //*/
     ad8950_phase(f & 0xFF);
     f+=100000;
   }
