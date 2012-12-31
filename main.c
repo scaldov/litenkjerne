@@ -5,6 +5,7 @@
 #include "ltkrn.h"
 #include "ad8950.h"
 #include "uart.h"
+#include "kout.h"
 
 #define OS_THREAD_STACK 0x30
 #define MAIN_THREAD_STACK 0x30
@@ -55,7 +56,7 @@ extern char uart_putchar (char c);
 static krn_thread thr_main, thr_btn, thr_io;
 
 NEAR static uint8_t adc_data[540];
-NEAR static char g_str[20];
+NEAR static char g_str[0x20];
 
 static uint8_t flag_led;
 static uint8_t g_cnt;
@@ -67,12 +68,12 @@ static NO_REG_SAVE void main_thread_func (void)
   while (1)
     {
         sleep_ticks = (flag_led) ? (KRN_FREQ / 1) : (KRN_FREQ / 4);
-        //for(i = 0; i < sleep_ticks; i--) GPIO_WriteHigh(GPIOD, GPIO_PIN_0);
-        //for(i = 0; i < sleep_ticks; i--) GPIO_WriteLow(GPIOD, GPIO_PIN_0);
         GPIO_WriteReverse(GPIOD, GPIO_PIN_0);
+        //*
         krn_mutex_lock(&mutex_printf);
-        for(j = 0; j < 500; j++) uart_putchar('-');
+        for(j = 0; j < 80; j++) uart_putchar('-');
         krn_mutex_unlock(&mutex_printf);
+        //*/
         krn_sleep(sleep_ticks);
     }
 }
@@ -84,102 +85,27 @@ static NO_REG_SAVE void btn_thread_func (void)
   while(1)
   {
     g_cnt += 1;
-    btn = 1;//GPIO_ReadInputPin(GPIOB, GPIO_PIN_7) ? 1 : 0;
+    btn = GPIO_ReadInputPin(GPIOB, GPIO_PIN_7) ? 1 : 0;
     if( btn != btn_old)
     {
       if (btn == 1) flag_led ^= 1;
     }
     btn_old = btn;
     btn = adc_data[btn_old];
+    /*
     krn_mutex_lock(&mutex_printf);
     for(j = 0; j < 1; j++) uart_putchar(((char)g_cnt & 0x1F) + 0x41);
     krn_mutex_unlock(&mutex_printf);
+    //*/
     krn_sleep(KRN_FREQ/100);
     //krn_dispatch();
   }
 }
 
-int8_t kout_u8h(char *s, uint8_t x)
-{
-  uint8_t t;
-  t = x >> 4;
-  t += 6;
-  t += (t & 0x10) ? 0x31 : 0x2A;
-  *(s++) = t;
-  t = x & 0xF;
-  t += 6;
-  t += (t & 0x10) ? 0x31 : 0x2A;
-  *(s++) = t;
-  *(s++) = 0;
-  return 2;
-}
-
-int8_t kout_u16h(char *s, uint16_t x)
-{
-  kout_u8h(s, x >> 8);
-  s += 2;
-  kout_u8h(s, x & 0xFF);
-  return 4;
-}
-
-int8_t kout_u32h(char *s, uint32_t x)
-{
-  kout_u8h(s, x >> 24);
-  s += 2;
-  kout_u8h(s, (x >> 16) & 0xFF);
-  s += 2;
-  kout_u8h(s, (x >> 8) & 0xFF);
-  s += 2;
-  kout_u8h(s, x & 0xFF);
-  return 8;
-}
-
-typedef struct
-{
-  uint32_t quot;
-  uint8_t rem;
-} ltkrn_divmodu10struc;
-
-
-inline static ltkrn_divmodu10struc divmodu10(uint32_t n)
-{
-  uint32_t qq;
-  ltkrn_divmodu10struc r;
-  r.quot = n >> 1;
-  r.quot += r.quot >> 1;
-  r.quot += r.quot >> 4;
-  r.quot += r.quot >> 8;
-  r.quot += r.quot >> 16;
-  qq = r.quot;
-  r.quot >>= 3;
-  r.rem = (uint8_t)(n - ((r.quot << 1) + (qq & ~7ul)));
-  if(r.rem > 9)
-    {
-        r.rem -= 10;
-        r.quot++;
-    }
-  return r;
-}
-
-char * utoa_builtin_div(uint32_t value, char *buffer)
-{
-  ltkrn_divmodu10struc r;
-  buffer += 11; 
-  *--buffer = 0;
-  do
-  {
-     r = divmodu10(value);
-      *--buffer = r.rem + 0x30;
-      value = r.quot;
-   }
-   while (value != 0);
-   return buffer;
-}
-
 void kout_uart(char *s)
 {
   krn_mutex_lock(&mutex_printf);
-  while (*s) uart_putchar(*(s++));
+  uart_write(s, strlen(s));
   krn_mutex_unlock(&mutex_printf);
 }
 
@@ -227,11 +153,29 @@ static NO_REG_SAVE void io_thread_func (void)
     kout_uart("f=");
     kout_uart(g_str);
     kout_uart(" sec=");
-    kout_uart(utoa_builtin_div(krn_timer_cnt / KRN_FREQ, g_str + 12));
+    kout_uart(kout_u32d(g_str + 12, krn_timer_cnt / KRN_FREQ));
+    kout_uart("\n");
+    //mode 1 demonstrates use of sliding ring buffer
+    /*
+    if(uart_rx_ev_get()) {
+      j = uart_rx_get_len();
+      uart_peek( g_str, j);
+      kout_uart(" bfr=");
+      uart_write(g_str, j);
+      kout_uart("\n");
+      uart_rx_ev_clr();
+    }
+    //*/
+    //mode 2 demonstrates receive buffer larger than ring buffer
+    //*
+    uart_read( g_str, 0x20);
+    kout_uart(" bfr=");
+    uart_write(g_str, 0x20);
     kout_uart("\n");
     //*/
     ad8950_phase(f & 0xFF);
-    f+=100000;
+    f+=1;//000000;
+    krn_sleep(KRN_FREQ/2);
   }
 }
 

@@ -1716,6 +1716,15 @@
     </excluded>
   </file>
   <file>
+    <name>$PROJ_DIR$\kout.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\kout.h</name>
+    <excluded>
+      <configuration>Debug</configuration>
+    </excluded>
+  </file>
+  <file>
     <name>$PROJ_DIR$\ltkrn-stm8-iar.asm</name>
   </file>
   <file>
@@ -1729,6 +1738,9 @@
   </file>
   <file>
     <name>$PROJ_DIR$\uart.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\uart.h</name>
   </file>
 </project>
 
