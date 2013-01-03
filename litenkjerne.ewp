@@ -841,11 +841,11 @@
         </option>
         <option>
           <name>GenStackSize</name>
-          <state>0x100</state>
+          <state>0x140</state>
         </option>
         <option>
           <name>GenHeapSize</name>
-          <state>0x100</state>
+          <state>0x140</state>
         </option>
         <option>
           <name>GeneralEnableMisra</name>
@@ -901,7 +901,7 @@
         <option>
           <name>IccOptStrategy</name>
           <version>0</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>IccOptLevelSlave</name>
@@ -955,23 +955,23 @@
         </option>
         <option>
           <name>CCListCFile</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListCMnemonics</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListCMessages</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListAssFile</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCListAssSource</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCEnableRemarks</name>
@@ -999,7 +999,7 @@
         </option>
         <option>
           <name>CCCompilerRuntimeInfo</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>PreInclude</name>
@@ -1215,7 +1215,7 @@
         <option>
           <name>OOCOutputFormat</name>
           <version>2</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>OCOutputOverride</name>
@@ -1223,7 +1223,7 @@
         </option>
         <option>
           <name>OOCOutputFile</name>
-          <state></state>
+          <state>litenkjerne.hex</state>
         </option>
         <option>
           <name>OOCCommandLineProducer</name>
@@ -1231,7 +1231,7 @@
         </option>
         <option>
           <name>OOCObjCopyEnable</name>
-          <state>0</state>
+          <state>1</state>
         </option>
       </data>
     </settings>
@@ -1341,7 +1341,7 @@
         </option>
         <option>
           <name>IlinkIcfFile</name>
-          <state>lnk0t.icf</state>
+          <state>$TOOLKIT_DIR$\config\lnkstm8s003k3.icf</state>
         </option>
         <option>
           <name>IlinkIcfFileSlave</name>
@@ -1405,7 +1405,7 @@
         </option>
         <option>
           <name>IlinkProgramEntryLabel</name>
-          <state></state>
+          <state>__iar_program_start</state>
         </option>
         <option>
           <name>DoFill</name>
@@ -1714,6 +1714,12 @@
     <excluded>
       <configuration>Debug</configuration>
     </excluded>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\hd44780.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\hd44780.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\kout.c</name>

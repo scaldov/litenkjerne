@@ -4,6 +4,7 @@
 #include "stm8s_tim4.h"
 #include "ltkrn.h"
 #include "ad8950.h"
+#include "hd44780.h"
 #include "uart.h"
 #include "kout.h"
 
@@ -14,41 +15,9 @@
 #define btn_thread_stack  (void*)(KRN_STACKFRAME - 2 * MAIN_THREAD_STACK)
 #define io_thread_stack   (void*)(KRN_STACKFRAME - 3 * MAIN_THREAD_STACK)
 
-////
-#define HD44780_RS    0x02
-#define HD44780_E     0x08
-#define HD44780_RW    0x04
-#define HD44780_DATA  0xF0
-#define HD44780_SH    4
-#define HD44780_PORT  GPIOC
-
 #include "stm8s_i2c.h"
 #include "stm8s_tim1.h"
 #include "stm8s_spi.h"
-
-void hd44780_cmd(uint8_t cmd)
-{
-  uint8_t p = (uint8_t)HD44780_PORT->ODR & ~(HD44780_DATA | HD44780_RS | HD44780_E | HD44780_RW);
-  uint8_t t = p | HD44780_E | ( ( (cmd & 0xF0) >> 4) << HD44780_SH);
-  HD44780_PORT->ODR = t;
-  HD44780_PORT->ODR = t & ~HD44780_E;
-  t = p | HD44780_E | ( (cmd & 0x0F) << HD44780_SH);
-  HD44780_PORT->ODR = t;
-  HD44780_PORT->ODR = t & ~HD44780_E;
-}
-
-void hd44780_out(uint8_t data)
-{
-  uint8_t p = (uint8_t)HD44780_PORT->ODR & ~(HD44780_DATA | HD44780_RS | HD44780_E | HD44780_RW);
-  p |= HD44780_RS;
-  uint8_t t = p | HD44780_E | ( ( (data & 0xF0) >> 4) << HD44780_SH);
-  HD44780_PORT->ODR = t;
-  HD44780_PORT->ODR = t & ~HD44780_E;
-  t = p | HD44780_E | ( (data & 0x0F) << HD44780_SH);
-  HD44780_PORT->ODR = t;
-  HD44780_PORT->ODR = t & ~HD44780_E;
-}
-////
 
 krn_mutex mutex_printf;
 extern char uart_putchar (char c);
@@ -113,32 +82,17 @@ static NO_REG_SAVE void io_thread_func (void)
 {
   int i, j, k;
   uint32_t f = 0;
-  /*
-  krn_sleep(KRN_FREQ/2);
-  hd44780_cmd(0x28);
-  krn_sleep(1);
-  hd44780_cmd(0x0c);
-  krn_sleep(1);
-  hd44780_cmd(0x01);
-  krn_sleep(1);
-  hd44780_out('S');
-  krn_sleep(1);
-  hd44780_out('c');
-  krn_sleep(1);
-  hd44780_out('y');
-  krn_sleep(1);
-  hd44780_out('l');
-  krn_sleep(1);
-  hd44780_out('d');
-  krn_sleep(1);
-  hd44780_out('.');
-  krn_sleep(1);
-  */
-  ad8950_init();
+  //*
+  hd44780_init();
+  krn_sleep(KRN_FREQ);
+  hd44780_init();
+  hd44780_write("\0\xC0Skjoldur.", 11);
+  //*/
+  //ad8950_init();
   //ad8950_freq(463856468); //13.5MHz
   //ad8950_freq(927712936); //27MHz
   //ad8950_freq(1030792151); //30MHz
-  ad8950_freq(8589935); //250KHz
+  //ad8950_freq(8589935); //250KHz
   while(1)
   {
     //adc_data[i] = i&0xFF;
@@ -151,12 +105,14 @@ static NO_REG_SAVE void io_thread_func (void)
     //*
     kout_u32h(g_str, f);
     kout_uart("f=");
+    hd44780_write("\0\200f=", 4);
     kout_uart(g_str);
+    hd44780_write(g_str, 8);
     kout_uart(" sec=");
     kout_uart(kout_u32d(g_str + 12, krn_timer_cnt / KRN_FREQ));
     kout_uart("\n");
     //mode 1 demonstrates use of sliding ring buffer
-    /*
+    //*
     if(uart_rx_ev_get()) {
       j = uart_rx_get_len();
       uart_peek( g_str, j);
@@ -167,13 +123,13 @@ static NO_REG_SAVE void io_thread_func (void)
     }
     //*/
     //mode 2 demonstrates receive buffer larger than ring buffer
-    //*
+    /*
     uart_read( g_str, 0x20);
     kout_uart(" bfr=");
     uart_write(g_str, 0x20);
     kout_uart("\n");
     //*/
-    ad8950_phase(f & 0xFF);
+    //ad8950_phase(f & 0xFF);
     f+=1;//000000;
     krn_sleep(KRN_FREQ/2);
   }

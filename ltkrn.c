@@ -1,4 +1,5 @@
 #include "ltkrn.h"
+#include "hd44780.h"
 #include "stm8s_tim4.h"
 
 uint8_t krn_timer_warp;
@@ -181,6 +182,9 @@ interrupt 23
     krn_timer_warp = 5;
     krn_dispatch();
   }
+#ifdef HD44780_TX
+  if(hd44780_flags & HD44780_TX) hd44780_tx_proc();
+#endif
   TIM4->SR1 = (uint8_t)(~(uint8_t)TIM4_IT_UPDATE);
 }
 
