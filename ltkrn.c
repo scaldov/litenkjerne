@@ -1,5 +1,5 @@
 #include "ltkrn.h"
-#include "hd44780.h"
+//#include "hd44780.h"
 #include "stm8s_tim4.h"
 
 uint8_t krn_timer_warp;
@@ -61,6 +61,24 @@ inline void krn_thread_move(krn_thread *thr, krn_thread *after)
 	thr->flags &= ~(KRN_THR_RND );
 	thr->flags |= (next->flags & (KRN_THR_RND ));
 }
+
+inline void krn_thread_wake(krn_thread *thr)
+{
+	krn_thread *prev, *next;
+	prev = thr->t_prev;
+	next = thr->t_next;
+        if(thr == krn_thread_nearest)
+        {
+	  krn_thread_nearest = next;
+          krn_timer_nearest = next->timer;
+        }
+	if(prev) prev->t_next = next;
+	if(next) next->t_prev = prev;
+	thr->t_prev = 0;
+	thr->t_next = 0;
+        krn_thread_cont(thr);
+}
+
 
 static NO_REG_SAVE void krn_thread_shell (void)
 {
@@ -156,6 +174,7 @@ inline void krn_dispatch()
       krn_thread_cont(krn_thread_nearest);
       old = krn_thread_nearest;
       krn_thread_nearest = krn_thread_nearest->t_next;
+      krn_thread_nearest->t_prev = 0;
       krn_timer_nearest = krn_thread_nearest->timer;
       old->t_next = 0;
     }
@@ -227,34 +246,34 @@ void krn_sleep(int16_t ticks)
   if(krn_thread_nearest)
   {
     old = krn_thread_nearest;
-    do
-    {
+    do {
       old->timer -= krn_timer_current;
-      if(post == 0)
-      {
-        if(ticks >= old->timer)
-        {
-          if(old->t_next)
-          {
+      if(post == 0) {
+        if(ticks >= old->timer) {
+          if(old->t_next) {
             if((old->t_next->timer - krn_timer_current) > ticks) post = old;
-          } else post = old;
+          } else {
+	    post = old;
+	  }
         }
       }
       old = old->t_next;
-    }while(old);
+    } while(old);
   }
   krn_timer_current = 0;
-  if(post != 0)
-  {
+  if(post != 0) {
     krn_thread_current->t_next = post->t_next;
+    krn_thread_current->t_prev = post;
+    if(post->t_next) post->t_next->t_prev = krn_thread_current;
     post->t_next = krn_thread_current;
     krn_thread_current->timer = ticks;
     krn_timer_nearest = krn_thread_nearest->timer;
   }
-  else
-  {
+  else {
     krn_thread_current->t_next = krn_thread_nearest;
+    krn_thread_current->t_prev = 0;
     krn_thread_current->timer = ticks;
+    if(krn_thread_nearest) krn_thread_nearest->t_prev = krn_thread_current;
     krn_thread_nearest = krn_thread_current;
     krn_timer_nearest = ticks;
   }

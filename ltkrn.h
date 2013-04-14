@@ -29,7 +29,7 @@ krn_mutex;
 typedef struct _krn_thread
 {
 	uint8_t *sp;
-	struct _krn_thread *prev, *next, *t_next;
+	struct _krn_thread *prev, *next, *t_prev, *t_next;
         krn_mutex *mutex;
 	uint8_t tslice;
 	uint8_t tslice_c;
@@ -61,6 +61,7 @@ extern inline void krn_dispatch();
 extern void krn_timer_init();
 extern void krn_run();
 extern void krn_sleep(int16_t ticks);
+extern void krn_thread_wake(krn_thread *thr);
 extern void krn_mutex_init(krn_mutex *mutex);
 extern void krn_mutex_lock(krn_mutex *mutex);
 extern void krn_mutex_unlock(krn_mutex *mutex);

@@ -13,8 +13,10 @@ volatile int uart_rx_head;
 volatile int uart_rx_tail;
 volatile int uart_tx_head;
 volatile int uart_tx_tail;
+volatile int16_t uart_rx_wait_timeout;
 
-char uart_rx_bfr[UART_RX_SIZE];
+
+NEAR static char uart_rx_bfr[UART_RX_SIZE];
 char uart_tx_bfr[UART_TX_SIZE];
 krn_thread *uart_sleep_thread_tx;
 krn_thread *uart_sleep_thread_rx;
@@ -30,16 +32,18 @@ INTERRUPT void uart_rx_isr (void)
 interrupt 18
 #endif
 {
-  uart_rx_bfr[uart_rx_head++] = UART1->DR;
+  if (UART1->SR & (UART1_SR_RXNE | UART1_SR_OR)) uart_rx_bfr[uart_rx_head++] = UART1->DR;
   if(uart_rx_head == UART_RX_SIZE) uart_rx_head = 0;
   if(uart_rx_head == uart_rx_tail) uart_flags |= UART_RX_RING_OF;
   uart_flags |= UART_RX_EV;
   if( uart_flags & UART_RX_RING_OF) uart_rx_tail = uart_rx_head;
   if(uart_sleep_thread_rx) {
-    krn_thread_unlock(uart_sleep_thread_rx);
+    //krn_thread_unlock(uart_sleep_thread_rx);
+    krn_thread_wake(uart_sleep_thread_rx);
     krn_thread_move(uart_sleep_thread_rx, krn_thread_current);
+    uart_flags &= ~UART_RX_WAIT;
     uart_sleep_thread_rx = 0;
-    //krn_dispatch(); //uncomment for extra hardness
+    krn_dispatch(); //uncomment for extra hardness
   }
 }
 
@@ -63,7 +67,7 @@ interrupt 17
       krn_thread_unlock(uart_sleep_thread_tx);
       krn_thread_move(uart_sleep_thread_tx, krn_thread_current);
       uart_sleep_thread_tx = 0;
-      //krn_dispatch(); //uncomment for extra hardness
+      krn_dispatch(); //uncomment for extra hardness
     }
   }
 }
@@ -74,6 +78,7 @@ void uart_rx_flush()
   CRITICAL_START();
   uart_rx_head = 0;
   uart_rx_tail = 0;
+  uart_flags &= ~(UART_RX_RING_OF | UART_RX_WAIT | UART_RX_EV);
   CRITICAL_END();
 }
 
@@ -89,7 +94,7 @@ int uart_rx_get_len()
   return l;
 }
 
-//reads n characters from buffer head
+//peeks n characters from buffer head
 //n must be less than buffer length
 int uart_last(char *p, int len)
 {
@@ -139,25 +144,42 @@ int uart_read_bfr(char *p, int len, char peek)
 int uart_read(char *bfr, int len)
 {
   CRITICAL_STORE;
-  int l;
+  int l, res;
+  res = 0;
   krn_mutex_lock(&uart_mutex_rx);
-  while(len)
-  {
+  while(len) {
     CRITICAL_START();
     l = uart_read_bfr(bfr, len, 0);
     len -= l;
+    res += l;
     if(len == 0) {
-      CRITICAL_END();
-      break;
+      goto uart_read_exit;
     }
     bfr += l;
     uart_sleep_thread_rx = krn_thread_current;
-    krn_thread_lock(uart_sleep_thread_rx);
-    krn_dispatch();
-    CRITICAL_END();
+    uart_flags |= UART_RX_WAIT;
+    krn_sleep(uart_rx_wait_timeout);
+    uart_sleep_thread_rx = 0;
+    if(uart_flags & UART_RX_WAIT) {
+      goto uart_read_exit;
+    }
+    goto uart_read_exit;
   }
+uart_read_exit:
   krn_mutex_unlock(&uart_mutex_rx);
-  return 0;
+  CRITICAL_END();
+  return res;
+}
+
+void uart_rx_wait()
+{
+  CRITICAL_STORE;
+  CRITICAL_START();
+    uart_sleep_thread_rx = krn_thread_current;
+    uart_flags |= UART_RX_WAIT;
+    krn_sleep(uart_rx_wait_timeout);
+    uart_sleep_thread_rx = 0;
+    CRITICAL_END();
 }
 
 int uart_write_bfr(char *bfr, int len)
@@ -210,6 +232,7 @@ void uart_write(char *bfr, int len)
 int uart_init(uint32_t baudrate)
 {
   int status;
+  uart_rx_wait_timeout = KRN_FREQ * 3;
   uart_flags = 0;
   uart_sleep_thread_tx = 0;
   uart_sleep_thread_rx = 0;
@@ -218,7 +241,10 @@ int uart_init(uint32_t baudrate)
               UART1_SYNCMODE_CLOCK_DISABLE, UART1_MODE_TXRX_ENABLE);
   krn_mutex_init(&uart_mutex_tx);
   krn_mutex_init(&uart_mutex_rx);
+  UART1->CR1 &= ~UART1_CR1_PIEN;
+  UART1->CR2 &= ~UART1_CR2_ILIEN;
   UART1->CR2 |= UART1_CR2_RIEN;
+  UART1->CR4 &= ~UART1_CR4_LBDIEN;
   return (status);
 }
 

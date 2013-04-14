@@ -75,3 +75,59 @@ char * kout_u32d(char *s, uint32_t x)
    while (x != 0);
    return s;
 }
+
+int8_t kin_u32h(char *s, uint32_t *val)
+{
+  uint32_t t = 0;
+  int8_t c, n = 0;
+  do {
+    c = *(s++);
+    c -= 0x30;
+    if(c & 0x80) break;
+    if(c > 9) {
+      c &= ~0x20;
+      c -= 0x11;
+      if(c & 0x80) break;
+      if(c > 5) break;
+      c+=0x0A;
+    }
+    t = (t << 4) + c;
+    n++;
+  } while (1);
+  *val = t;
+  return n;
+}
+
+int8_t kin_u32d(char *s, uint32_t *val)
+{
+  uint32_t t = 0;
+  int8_t c, n = 0;
+  do {
+    c = *(s++);
+    c -= 0x30;
+    if(c & 0x80) break;
+    if(c > 9) break;
+    t += (t << 2);
+    t = (t << 1) + c;
+    n++;
+  } while (1);
+  *val = t;
+  return n;
+}
+
+int8_t kin_u32(char *s, uint32_t *val)
+{
+  int8_t n = 0;
+  if(( s[0] == '0') && ( (s[1] & ~0x20) == 'X')  )
+  {
+    return kin_u32h(s + 2, val);
+  } else {
+    return kin_u32d(s, val);
+  }
+}
+
+char *kin_next(char *s)
+{
+  while( *s <= 0x20 ) s++;
+  return s;
+}
